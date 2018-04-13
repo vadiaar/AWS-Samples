@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/S3NetCoreClient/.vs
+/S3NetCoreClient/S3NetCoreClient.Client/bin/Debug/netcoreapp2.0
+/S3NetCoreClient/S3NetCoreClient.Client/obj
+/S3NetCoreClient/S3NetCoreClient.Service/bin/Debug/netcoreapp2.0
+/S3NetCoreClient/S3NetCoreClient.Service/obj
