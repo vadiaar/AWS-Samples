@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
+using log4net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using S3NetCoreClient.Service.Models;
@@ -19,7 +20,7 @@ namespace S3NetCoreClient.Service.Controllers
 
         public S3BucketItemController(IAmazonS3 client): base(client)
         {
-
+            Log = LogManager.GetLogger(GetType());
         }
 
         // GET: api/S3BucketItem
@@ -49,6 +50,7 @@ namespace S3NetCoreClient.Service.Controllers
         [HttpPost]
         public void Post([FromBody]BucketItem item)
         {
+            
             PutObjectRequest request = new PutObjectRequest();
             request.BucketName = item.BucketName;
             byte[] contentBytes = Convert.FromBase64String(item.Base64Content);

@@ -1,16 +1,21 @@
 ﻿using Amazon.S3.Model;
+using log4net;
+using log4net.Config;
 using Newtonsoft.Json;
 using S3NetCoreClient.Service.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace S3NetCoreClient.Client
 {
     internal class Program
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(Program));
         private static S3Bucket _currentBucket = null;   
         private static HttpClient _client;
 
@@ -22,9 +27,16 @@ namespace S3NetCoreClient.Client
                 return _client;
             }
         }
+
+        static Program()
+        {
+            
+        }
         
         private static void Main(string[] args)
         {
+            
+            
             Console.WriteLine("Welcome to Ravi's S3 Container");
             Client.BaseAddress = new Uri("http://localhost:22831/");
             Client.DefaultRequestHeaders.Accept.Clear();
@@ -49,6 +61,22 @@ namespace S3NetCoreClient.Client
                 Console.WriteLine("Invalid key. Please try again");
             }
             Console.WriteLine(_currentBucket.BucketName);
+
+            foreach (KeyValuePair<string, string> pair in GetFileContentByKey())
+            {
+                BucketItem item = new BucketItem()
+                {
+                    BucketName = _currentBucket.BucketName,
+                    Key = pair.Key,
+                    Base64Content = pair.Value
+                };
+                if (!SaveItem(item))
+                {
+                    Console.WriteLine($"Failed to save {item.Key} item to {item.BucketName} bucket");
+                }
+            }
+            
+
             Console.ReadLine();
             
         }
@@ -65,9 +93,41 @@ namespace S3NetCoreClient.Client
             return buckets;
         }
 
-        private void SaveItem(BucketItem item)
+        private static Dictionary<string, string> GetFileContentByKey()
         {
+            Dictionary<string, string> fileContentMap = new Dictionary<string, string>();
+            string sampleContentFolderPath = @"C:\Workspace\vadiaar\AWS-Samples\SampleContent";
+            string[] filePaths = Directory.GetFiles(sampleContentFolderPath, "*.*", SearchOption.AllDirectories);
+            foreach (string filePath in filePaths)
+            {
 
+                string key = filePath.Replace(sampleContentFolderPath, string.Empty);
+                key = key.Replace(Path.GetFileName(key), string.Empty).Trim('\\');
+                Console.WriteLine(key);
+                fileContentMap.Add(key, GetBase64StringFileContent(filePath));
+            }
+            return fileContentMap;
+        }
+        
+        private static string GetBase64StringFileContent(string filePath)
+        {           
+                byte[] contentBytes = File.ReadAllBytes(filePath);
+                return Convert.ToBase64String(contentBytes, 0, contentBytes.Length);               
+            
+        }
+
+        private static bool SaveItem(BucketItem item)
+        {
+            
+            List<S3Bucket> buckets = new List<S3Bucket>();
+            HttpContent content = new StringContent(JsonConvert.SerializeObject(item));
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            HttpResponseMessage response = Client.PostAsync("api/s3bucketItem", content).GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

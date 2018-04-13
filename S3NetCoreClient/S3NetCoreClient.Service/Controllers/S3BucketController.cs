@@ -1,5 +1,6 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+using log4net;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace S3NetCoreClient.Service.Controllers
     {
         public S3BucketController(IAmazonS3 client): base(client)
         {
-            
+            Log = LogManager.GetLogger(GetType());
         }
 
         
