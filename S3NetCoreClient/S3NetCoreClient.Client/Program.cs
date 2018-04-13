@@ -62,13 +62,14 @@ namespace S3NetCoreClient.Client
             }
             Console.WriteLine(_currentBucket.BucketName);
 
-            foreach (KeyValuePair<string, string> pair in GetFileContentByKey())
+            foreach (KeyValuePair<string, KeyValuePair<string, string>> pair in GetFileContentByKey())
             {
                 BucketItem item = new BucketItem()
                 {
                     BucketName = _currentBucket.BucketName,
                     Key = pair.Key,
-                    Base64Content = pair.Value
+                    FileName = pair.Value.Key,
+                    Base64Content = pair.Value.Value
                 };
                 if (!SaveItem(item))
                 {
@@ -93,18 +94,20 @@ namespace S3NetCoreClient.Client
             return buckets;
         }
 
-        private static Dictionary<string, string> GetFileContentByKey()
+        private static Dictionary<string, KeyValuePair<string, string>> GetFileContentByKey()
         {
-            Dictionary<string, string> fileContentMap = new Dictionary<string, string>();
+            Dictionary<string, KeyValuePair<string, string>> fileContentMap = new Dictionary<string, KeyValuePair<string, string>>();
             string sampleContentFolderPath = @"C:\Workspace\vadiaar\AWS-Samples\SampleContent";
             string[] filePaths = Directory.GetFiles(sampleContentFolderPath, "*.*", SearchOption.AllDirectories);
             foreach (string filePath in filePaths)
             {
-
+                string fileName = Path.GetFileName(filePath);
                 string key = filePath.Replace(sampleContentFolderPath, string.Empty);
-                key = key.Replace(Path.GetFileName(key), string.Empty).Trim('\\');
+                key = key.Replace(fileName, string.Empty).Trim('\\');                
+                key = key.Replace('\\', '/');
+                key = $"{key}/";
                 Console.WriteLine(key);
-                fileContentMap.Add(key, GetBase64StringFileContent(filePath));
+                fileContentMap.Add(key, new KeyValuePair<string, string>(fileName, GetBase64StringFileContent(filePath)));
             }
             return fileContentMap;
         }
