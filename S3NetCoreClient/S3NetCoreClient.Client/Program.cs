@@ -1,5 +1,6 @@
 ﻿using Amazon.S3.Model;
 using Newtonsoft.Json;
+using S3NetCoreClient.Service.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -47,6 +48,8 @@ namespace S3NetCoreClient.Client
             {
                 Console.WriteLine("Invalid key. Please try again");
             }
+            Console.WriteLine(_currentBucket.BucketName);
+            Console.ReadLine();
             
         }
 
@@ -60,6 +63,11 @@ namespace S3NetCoreClient.Client
                 buckets = JsonConvert.DeserializeObject<List<S3Bucket>>(jsonResult);
             }
             return buckets;
+        }
+
+        private void SaveItem(BucketItem item)
+        {
+
         }
     }
 }

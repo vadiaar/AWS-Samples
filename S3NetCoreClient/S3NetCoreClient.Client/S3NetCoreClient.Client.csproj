@@ -10,6 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\S3NetCoreClient.Models\S3NetCoreClient.Models.csproj" />
+    <ProjectReference Include="..\S3NetCoreClient.Service\S3NetCoreClient.Service.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>C:\Program Files\dotnet\sdk\NuGetFallbackFolder\newtonsoft.json\10.0.1\lib\netstandard1.3\Newtonsoft.Json.dll</HintPath>
     </Reference>
