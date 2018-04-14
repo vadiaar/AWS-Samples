@@ -1,136 +1,67 @@
 ﻿using Amazon.S3.Model;
 using log4net;
-using log4net.Config;
-using Newtonsoft.Json;
 using S3NetCoreClient.Service.Models;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace S3NetCoreClient.Client
 {
     internal class Program
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(Program));
-        private static S3Bucket _currentBucket = null;   
-        private static HttpClient _client;
 
-        public static HttpClient Client
-        {
-            get
-            {
-                _client = _client ?? new HttpClient();
-                return _client;
-            }
-        }
-
-        static Program()
-        {
-            
-        }
-        
         private static void Main(string[] args)
         {
-            
-            
+            ServiceManager manager = ServiceManager.Instance;
             Console.WriteLine("Welcome to Ravi's S3 Container");
-            Client.BaseAddress = new Uri("http://localhost:22831/");
-            Client.DefaultRequestHeaders.Accept.Clear();
-            Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            List<S3Bucket> buckets = GetBuckets().GetAwaiter().GetResult();
+            List<S3Bucket> buckets = manager.GetBuckets().GetAwaiter().GetResult();
             Console.WriteLine();
             Console.WriteLine("Choose from below S3 containers ...");
-            int index=1;
+            int index = 1;
             Dictionary<string, S3Bucket> bucketsByIndex = new Dictionary<string, S3Bucket>();
             foreach (S3Bucket bucket in buckets)
             {
                 bucketsByIndex.Add(index.ToString(), bucket);
                 Console.WriteLine($"Press {index} for {bucket.BucketName}");
                 index++;
-                
             }
-            
-            string bucketOption = Console.ReadLine();                       
-            while(!bucketsByIndex.TryGetValue(bucketOption, out _currentBucket))
+
+            string bucketOption = Console.ReadLine();
+            S3Bucket _currentBucket;
+            while (!bucketsByIndex.TryGetValue(bucketOption, out _currentBucket))
             {
                 Console.WriteLine("Invalid key. Please try again");
             }
             Console.WriteLine(_currentBucket.BucketName);
 
-            foreach (KeyValuePair<string, KeyValuePair<string, string>> pair in GetFileContentByKey())
+            foreach (ServiceManager.FileMeta fileMeta in manager.GetFileContentByKey())
             {
                 BucketItem item = new BucketItem()
                 {
                     BucketName = _currentBucket.BucketName,
-                    Key = pair.Key,
-                    FileName = pair.Value.Key,
-                    Base64Content = pair.Value.Value
+                    Key = fileMeta.FolderKey,
                 };
-                if (!SaveItem(item))
+                if (manager.SaveItem(item))
                 {
-                    Console.WriteLine($"Failed to save {item.Key} item to {item.BucketName} bucket");
+                    item = new BucketItem()
+                    {
+                        BucketName = _currentBucket.BucketName,
+                        Key = $"{fileMeta.FolderKey}{fileMeta.FileKey}",
+                        Base64Content = fileMeta.FileContentBase64String
+                    };
+                    if (!manager.SaveItem(item))
+                    {
+                        Console.WriteLine("Failed to upload file");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to create folder structure");
                 }
             }
-            
 
             Console.ReadLine();
-            
-        }
-
-        private async static Task<List<S3Bucket>> GetBuckets()
-        {
-            List<S3Bucket> buckets = new List<S3Bucket>();
-            HttpResponseMessage response = await Client.GetAsync("api/s3bucket");
-            if (response.IsSuccessStatusCode)
-            {
-                string jsonResult = await response.Content.ReadAsStringAsync();
-                buckets = JsonConvert.DeserializeObject<List<S3Bucket>>(jsonResult);
-            }
-            return buckets;
-        }
-
-        private static Dictionary<string, KeyValuePair<string, string>> GetFileContentByKey()
-        {
-            Dictionary<string, KeyValuePair<string, string>> fileContentMap = new Dictionary<string, KeyValuePair<string, string>>();
-            string sampleContentFolderPath = @"C:\Workspace\vadiaar\AWS-Samples\SampleContent";
-            string[] filePaths = Directory.GetFiles(sampleContentFolderPath, "*.*", SearchOption.AllDirectories);
-            foreach (string filePath in filePaths)
-            {
-                string fileName = Path.GetFileName(filePath);
-                string key = filePath.Replace(sampleContentFolderPath, string.Empty);
-                key = key.Replace(fileName, string.Empty).Trim('\\');                
-                key = key.Replace('\\', '/');
-                key = $"{key}/";
-                Console.WriteLine(key);
-                fileContentMap.Add(key, new KeyValuePair<string, string>(fileName, GetBase64StringFileContent(filePath)));
-            }
-            return fileContentMap;
-        }
-        
-        private static string GetBase64StringFileContent(string filePath)
-        {           
-                byte[] contentBytes = File.ReadAllBytes(filePath);
-                return Convert.ToBase64String(contentBytes, 0, contentBytes.Length);               
-            
-        }
-
-        private static bool SaveItem(BucketItem item)
-        {
-            
-            List<S3Bucket> buckets = new List<S3Bucket>();
-            HttpContent content = new StringContent(JsonConvert.SerializeObject(item));
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            HttpResponseMessage response = Client.PostAsync("api/s3bucketItem", content).GetAwaiter().GetResult();
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-            return false;
         }
     }
 }
