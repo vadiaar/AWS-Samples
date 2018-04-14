@@ -12,7 +12,13 @@ namespace S3NetCoreClient.Client
 {
     public class ServiceManager
     {
+        #region Fields
+
         private static ServiceManager _instance;
+
+        #endregion Fields
+
+        #region Properties
 
         public static ServiceManager Instance
         {
@@ -27,6 +33,10 @@ namespace S3NetCoreClient.Client
 
         public S3Bucket CurrentBucket { get; set; }
 
+        #endregion Properties
+
+        #region Constructor
+
         protected ServiceManager()
         {
             Client = new HttpClient();
@@ -35,12 +45,20 @@ namespace S3NetCoreClient.Client
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        #endregion Constructor
+
+        #region Inner Classes
+
         public class FileMeta
         {
             public string FolderKey { get; set; }
             public string FileKey { get; set; }
             public string FileContentBase64String { get; set; }
         }
+
+        #endregion Inner Classes
+
+        #region Public Methods
 
         public async Task<List<S3Bucket>> GetBuckets()
         {
@@ -96,5 +114,7 @@ namespace S3NetCoreClient.Client
             }
             return false;
         }
+
+        #endregion Public Methods
     }
 }

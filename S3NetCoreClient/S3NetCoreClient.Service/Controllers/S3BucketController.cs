@@ -11,16 +11,21 @@ namespace S3NetCoreClient.Service.Controllers
     [Route("api/s3bucket")]
     public class S3BucketController : S3ControllerBase
     {
-        public S3BucketController(IAmazonS3 client): base(client)
+        #region Constructor
+
+        public S3BucketController(IAmazonS3 client) : base(client)
         {
             Log = LogManager.GetLogger(GetType());
         }
 
-        
+        #endregion Constructor
+
+        #region Actions
+
         [HttpGet]
         public async Task<IEnumerable<S3Bucket>> GetAsync()
         {
-            ListBucketsResponse listBucketsResponse =  await S3Client.ListBucketsAsync();
+            ListBucketsResponse listBucketsResponse = await S3Client.ListBucketsAsync();
             return listBucketsResponse.Buckets;
         }
 
@@ -48,5 +53,7 @@ namespace S3NetCoreClient.Service.Controllers
         public void Delete(int id)
         {
         }
+
+        #endregion Actions
     }
 }

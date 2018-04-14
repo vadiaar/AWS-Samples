@@ -3,7 +3,6 @@ using Amazon.S3.Model;
 using log4net;
 using Microsoft.AspNetCore.Mvc;
 using S3NetCoreClient.Service.Models;
-using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -13,10 +12,16 @@ namespace S3NetCoreClient.Service.Controllers
     [Route("api/s3bucketItem")]
     public class S3BucketItemController : S3ControllerBase
     {
+        #region Constructor
+
         public S3BucketItemController(IAmazonS3 client) : base(client)
         {
             Log = LogManager.GetLogger(GetType());
         }
+
+        #endregion Constructor
+
+        #region Actions
 
         // GET: api/S3BucketItem
         [HttpGet]
@@ -45,6 +50,29 @@ namespace S3NetCoreClient.Service.Controllers
         [HttpPost]
         public void Post([FromBody]BucketItem item)
         {
+            UploadObject(item);
+        }
+
+        // PUT: api/S3BucketItem/5
+        [HttpPut("{id}")]
+        public void Put([FromBody]BucketItem item)
+        {
+            UploadObject(item);
+        }
+
+        // DELETE: api/ApiWithActions/5
+        [HttpDelete("{id}")]
+        public void Delete(int id)
+        {
+        }
+
+        #endregion Actions
+
+        #region Private Methods
+
+        private void UploadObject(BucketItem item)
+
+        {
             PutObjectRequest request = new PutObjectRequest();
             request.BucketName = item.BucketName;
             request.Key = item.Key;
@@ -55,24 +83,6 @@ namespace S3NetCoreClient.Service.Controllers
             PutObjectResponse response = S3Client.PutObjectAsync(request).GetAwaiter().GetResult();
         }
 
-        // PUT: api/S3BucketItem/5
-        [HttpPut("{id}")]
-        public void Put([FromBody]BucketItem item)
-        {
-            PutObjectRequest request = new PutObjectRequest();
-            request.BucketName = item.BucketName;
-            byte[] contentBytes = Convert.FromBase64String(item.Base64Content);
-            request.ContentBody = item.Base64Content;
-            request.ContentType = "application/csv";
-            request.Key = item.Key;
-            request.Metadata.Add("x-amz-meta-title", item.FileName);
-            S3Client.PutObjectAsync(request);
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        #endregion Private Methods
     }
 }
